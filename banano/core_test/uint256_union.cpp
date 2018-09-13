@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <banano/secure/common.hpp>
 #include <banano/lib/interface.h>
+#include <banano/secure/common.hpp>
 
 TEST (uint128_union, decode_dec)
 {
@@ -307,6 +307,7 @@ TEST (uint256_union, big_endian_union_function)
 TEST (uint256_union, decode_nano_variant)
 {
 	rai::uint256_union key;
+	ASSERT_FALSE (key.decode_account ("ban_1111111111111111111111111111111111111111111111111111hifc8npp"));
 	ASSERT_FALSE (key.decode_account ("ban_1111111111111111111111111111111111111111111111111111hifc8npp"));
 }
 

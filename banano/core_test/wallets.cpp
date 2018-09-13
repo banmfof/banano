@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include <banano/node/testing.hpp>
 #include <banano/core_test/testutil.hpp>
+#include <banano/node/testing.hpp>
 
 using namespace std::chrono_literals;
 
@@ -87,7 +87,7 @@ TEST (wallets, DISABLED_wallet_create_max)
 		ASSERT_TRUE (existing != wallets.items.end ());
 		rai::raw_key seed;
 		seed.data = 0;
-		rai::transaction transaction (system.nodes[0]->store.environment, nullptr, true);
+		auto transaction (system.nodes[0]->store.tx_begin (true));
 		existing->second->store.seed_set (transaction, seed);
 	}
 	rai::keypair key;
