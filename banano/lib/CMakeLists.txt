@@ -1,16 +1,16 @@
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-	set (platform_sources plat/default/priority.cpp)
+	set (platform_sources plat/default/priority.cpp plat/posix/perms.cpp)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	set (platform_sources plat/windows/priority.cpp)
+	set (platform_sources plat/windows/priority.cpp plat/windows/perms.cpp)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-	set (platform_sources plat/linux/priority.cpp)
+	set (platform_sources plat/linux/priority.cpp plat/posix/perms.cpp)
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-	set (platform_sources plat/default/priority.cpp)
+	set (platform_sources plat/default/priority.cpp plat/posix/perms.cpp)
 else ()
 	error ("Unknown platform: ${CMAKE_SYSTEM_NAME}")
 endif ()
 
-add_library (rai_lib
+add_library (banano_lib
 	${platform_sources}
 	errors.hpp
 	errors.cpp
@@ -38,8 +38,8 @@ target_compile_definitions(rai_lib
 		-DACTIVE_NETWORK=${ACTIVE_NETWORK}
 )
 
-if (RAIBLOCKS_GUI AND NOT APPLE)
-	install(TARGETS rai_lib
+if (BAN_GUI AND NOT APPLE)
+	install(TARGETS banano_lib
 			RUNTIME DESTINATION bin
 			LIBRARY DESTINATION lib
 			ARCHIVE DESTINATION lib
