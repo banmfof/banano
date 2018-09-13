@@ -1,18 +1,4 @@
-#pragma once
 
-#include <boost/multiprecision/cpp_int.hpp>
-
-#include <cryptopp/osrng.h>
-
-namespace rai
-{
-// Random pool used by Banano.
-// This must be thread_local as long as the AutoSeededRandomPool implementation requires it
-extern thread_local CryptoPP::AutoSeededRandomPool random_pool;
-using uint128_t = boost::multiprecision::uint128_t;
-using uint256_t = boost::multiprecision::uint256_t;
-using uint512_t = boost::multiprecision::uint512_t;
-// SI dividers
 rai::uint128_t const kBAN_ratio = rai::uint128_t ("100000000000000000000000000000000"); // 10^32
 rai::uint128_t const BAN_ratio = rai::uint128_t ("100000000000000000000000000000"); // 10^29
 rai::uint128_t const banoshi_ratio = rai::uint128_t ("1000000000000000000000000000"); // 10^27
@@ -24,6 +10,10 @@ union uint128_union
 {
 public:
 	uint128_union () = default;
+	/**
+	 * Decode from hex string
+	 * @warning Aborts at runtime if the input is invalid
+	 */
 	uint128_union (std::string const &);
 	uint128_union (uint64_t);
 	uint128_union (rai::uint128_union const &) = default;
@@ -54,6 +44,10 @@ class raw_key;
 union uint256_union
 {
 	uint256_union () = default;
+	/**
+	 * Decode from hex string
+	 * @warning Aborts at runtime if the input is invalid
+	 */
 	uint256_union (std::string const &);
 	uint256_union (uint64_t);
 	uint256_union (rai::uint256_t const &);
