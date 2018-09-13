@@ -21,8 +21,8 @@ file (READ ${CMAKE_SOURCE_DIR}/${REP_WEIGHTS_BIN_NAME} filedata HEX)
 string (REGEX REPLACE "(..)" "0x\\1," filedata ${filedata})
 file (WRITE ${CMAKE_BINARY_DIR}/bootstrap_weights.cpp "#include <cstddef>\n"
 	"namespace rai {\n"
-	"	unsigned char banano_bootstrap_weights[] = {${filedata} 0x00};\n"
-	"	size_t banano_bootstrap_weights_size = sizeof(banano_bootstrap_weights) - 1;\n"
+	"	unsigned char rai_bootstrap_weights[] = {${filedata} 0x00};\n"
+	"	size_t rai_bootstrap_weights_size = sizeof(rai_bootstrap_weights) - 1;\n"
 	"}\n")
 
 add_library (secure
