@@ -1,8 +1,8 @@
 cmake_minimum_required (VERSION 3.4)
 project (rai)
 
-set (CPACK_PACKAGE_VERSION_MAJOR "15")
-set (CPACK_PACKAGE_VERSION_MINOR "2")
+set (CPACK_PACKAGE_VERSION_MAJOR "17")
+set (CPACK_PACKAGE_VERSION_MINOR "0")
 set (CPACK_PACKAGE_VERSION_PATCH "0")
 if (DEFINED GIT_COMMIT)
 	set (CPACK_PACKAGE_VERSION_PATCH "GIT-${GIT_COMMIT}")
@@ -53,7 +53,7 @@ else ()
 	endif()
 
 	IF (CMAKE_SYSTEM_PROCESSOR MATCHES "^(i.86|x86(_64)?)$")
-		if (RAIBLOCKS_SIMD_OPTIMIZATIONS)
+		if (BANANO_SIMD_OPTIMIZATIONS)
 			add_compile_options(-msse4)
 		elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64")
 			add_compile_options(-msse2)
@@ -120,7 +120,7 @@ if (BOOST_ROOT)
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 endif ()
 
-find_package (Boost 1.66.0 REQUIRED COMPONENTS date_time filesystem system log log_setup thread program_options regex chrono atomic)
+find_package (Boost 1.66.0 REQUIRED COMPONENTS filesystem log thread program_options)
 
 add_subdirectory(ed25519-donna)
 
@@ -227,10 +227,10 @@ add_library (blake2
 
 target_compile_definitions(blake2 PRIVATE -D__SSE2__)
 
-add_subdirectory(banano/secure)
-add_subdirectory(banano/lib)
-add_subdirectory(banano/node)
-add_subdirectory(banano/bananode)
+add_subdirectory(rai/secure)
+add_subdirectory(rai/lib)
+add_subdirectory(rai/node)
+add_subdirectory(rai/bananode)
 
 if (BANANO_TEST)
     if(WIN32)
@@ -252,8 +252,8 @@ if (BANANO_TEST)
 	set_target_properties(gtest PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
 		"${CMAKE_SOURCE_DIR}/gtest/include")
 
-	add_subdirectory(banano/core_test)
-	add_subdirectory(banano/slow_test)
+	add_subdirectory(rai/core_test)
+	add_subdirectory(rai/slow_test)
 endif ()
 
 if (BANANO_GUI)
@@ -266,8 +266,8 @@ if (BANANO_GUI)
 	find_package (Qt5 COMPONENTS Core Gui Widgets Test ${PLATFORM_QT_PACKAGES})
 
 	add_library (qt
-		banano/qt/qt.cpp
-		banano/qt/qt.hpp)
+		rai/qt/qt.cpp
+		rai/qt/qt.hpp)
 
 	target_link_libraries(qt
 		secure banano_lib node libminiupnpc-static Qt5::Gui Qt5::Widgets)
@@ -284,35 +284,35 @@ if (BANANO_GUI)
 	endif ()
 
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		set (PLATFORM_WALLET_SOURCE banano/banano_wallet/plat/default/icon.cpp)
+		set (PLATFORM_WALLET_SOURCE rai/banano_wallet/plat/default/icon.cpp)
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		set (PLATFORM_WALLET_SOURCE banano/banano_wallet/plat/windows/icon.cpp Banano.rc)
+		set (PLATFORM_WALLET_SOURCE rai/banano_wallet/plat/windows/icon.cpp Banano.rc)
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-		set (PLATFORM_WALLET_SOURCE banano/banano_wallet/plat/default/icon.cpp)
+		set (PLATFORM_WALLET_SOURCE rai/banano_wallet/plat/default/icon.cpp)
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-		set (PLATFORM_WALLET_SOURCE banano/banano_wallet/plat/default/icon.cpp)
+		set (PLATFORM_WALLET_SOURCE rai/banano_wallet/plat/default/icon.cpp)
 	else ()
 		error ("Unknown platform: ${CMAKE_SYSTEM_NAME}")
 	endif ()
 
 	qt5_add_resources(RES resources.qrc)
 
-	add_executable (banano_wallet ${PLATFORM_GUI_TARGET_PROPERTIES}
+	add_executable (nano_wallet ${PLATFORM_GUI_TARGET_PROPERTIES}
 		${PLATFORM_WALLET_SOURCE}
-		banano/banano_wallet/entry.cpp
-		banano/banano_wallet/icon.hpp
+		rai/banano_wallet/entry.cpp
+		rai/banano_wallet/icon.hpp
 		${RES})
 
-	target_link_libraries (banano_wallet
+	target_link_libraries (nano_wallet
 		node
 		qt)
 
 	if (WIN32)
-		target_link_libraries (banano_wallet Qt5::WinExtras)
+		target_link_libraries (nano_wallet Qt5::WinExtras)
 	endif()
 
 	add_executable (qt_system
-		banano/qt_system/entry.cpp)
+		rai/qt_system/entry.cpp)
 
 	target_link_libraries (qt_system qt node Qt5::Gui Qt5::Widgets)
 
@@ -320,8 +320,8 @@ if (BANANO_GUI)
 
 	if (BANANO_TEST)
 		add_executable (qt_test
-			banano/qt_test/entry.cpp
-			banano/qt_test/qt.cpp)
+			rai/qt_test/entry.cpp
+			rai/qt_test/qt.cpp)
 
 		target_link_libraries(qt_test gtest gtest_main qt Qt5::Test)
 
@@ -329,14 +329,14 @@ if (BANANO_GUI)
 	endif ()
 
 	if (APPLE)
-		install (TARGETS nano_wallet DESTINATION Banano.app/Contents/MacOS)
+		install (TARGETS banano_wallet DESTINATION Banano.app/Contents/MacOS)
 		install (FILES Info.plist DESTINATION Banano.app/Contents)
 		install (FILES qt.conf DESTINATION Banano.app/Contents/Resources)
 		install (DIRECTORY ${Qt5_DIR}/../../QtCore.framework DESTINATION Banano.app/Contents/Frameworks)
 		install (DIRECTORY ${Qt5_DIR}/../../QtGui.framework DESTINATION Banano.app/Contents/Frameworks)
 		install (DIRECTORY ${Qt5_DIR}/../../QtPrintSupport.framework DESTINATION Banano.app/Contents/Frameworks)
-		install (DIRECTORY ${Qt5_DIR}/../../QtTest.framework DESTINATION Nano.app/Contents/Frameworks)
-		install (DIRECTORY ${Qt5_DIR}/../../QtWidgets.framework DESTINATION Nano.app/Contents/Frameworks)
+		install (DIRECTORY ${Qt5_DIR}/../../QtTest.framework DESTINATION Banano.app/Contents/Frameworks)
+		install (DIRECTORY ${Qt5_DIR}/../../QtWidgets.framework DESTINATION Banano.app/Contents/Frameworks)
 		install (FILES "${Qt5_DIR}/../../../plugins/platforms/libqcocoa.dylib" DESTINATION Banano.app/Contents/PlugIns/platforms)
 		install (FILES Banano.icns DESTINATION Banano.app/Contents/Resources)
 	elseif (WIN32)
@@ -365,7 +365,7 @@ if (BANANO_GUI)
 		install (FILES ${Qt5_bin_DIR}/Qt5WinExtras.dll DESTINATION .)
 		install (FILES ${Qt5WindowsPlugin} DESTINATION platforms)
 	else ()
-		install(TARGETS banano_wallet
+		install(TARGETS nano_wallet
 				RUNTIME DESTINATION bin
 				LIBRARY DESTINATION lib
 				ARCHIVE DESTINATION lib
