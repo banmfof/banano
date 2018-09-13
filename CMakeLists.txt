@@ -227,10 +227,10 @@ add_library (blake2
 
 target_compile_definitions(blake2 PRIVATE -D__SSE2__)
 
-add_subdirectory(rai/secure)
-add_subdirectory(rai/lib)
-add_subdirectory(rai/node)
-add_subdirectory(rai/bananode)
+add_subdirectory(banano/secure)
+add_subdirectory(banano/lib)
+add_subdirectory(banano/node)
+add_subdirectory(banano/bananode)
 
 if (BANANO_TEST)
     if(WIN32)
@@ -252,8 +252,8 @@ if (BANANO_TEST)
 	set_target_properties(gtest PROPERTIES INTERFACE_INCLUDE_DIRECTORIES
 		"${CMAKE_SOURCE_DIR}/gtest/include")
 
-	add_subdirectory(rai/core_test)
-	add_subdirectory(rai/slow_test)
+	add_subdirectory(banano/core_test)
+	add_subdirectory(banano/slow_test)
 endif ()
 
 if (BANANO_GUI)
@@ -266,8 +266,8 @@ if (BANANO_GUI)
 	find_package (Qt5 COMPONENTS Core Gui Widgets Test ${PLATFORM_QT_PACKAGES})
 
 	add_library (qt
-		rai/qt/qt.cpp
-		rai/qt/qt.hpp)
+		banano//qt/qt.cpp
+		banano//qt/qt.hpp)
 
 	target_link_libraries(qt
 		secure banano_lib node libminiupnpc-static Qt5::Gui Qt5::Widgets)
@@ -284,13 +284,13 @@ if (BANANO_GUI)
 	endif ()
 
 	if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-		set (PLATFORM_WALLET_SOURCE rai/banano_wallet/plat/default/icon.cpp)
+		set (PLATFORM_WALLET_SOURCE banano/banano_wallet/plat/default/icon.cpp)
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-		set (PLATFORM_WALLET_SOURCE rai/banano_wallet/plat/windows/icon.cpp Banano.rc)
+		set (PLATFORM_WALLET_SOURCE banano/banano_wallet/plat/windows/icon.cpp Banano.rc)
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-		set (PLATFORM_WALLET_SOURCE rai/banano_wallet/plat/default/icon.cpp)
+		set (PLATFORM_WALLET_SOURCE banano/banano_wallet/plat/default/icon.cpp)
 	elseif (${CMAKE_SYSTEM_NAME} MATCHES "FreeBSD")
-		set (PLATFORM_WALLET_SOURCE rai/banano_wallet/plat/default/icon.cpp)
+		set (PLATFORM_WALLET_SOURCE banano/banano_wallet/plat/default/icon.cpp)
 	else ()
 		error ("Unknown platform: ${CMAKE_SYSTEM_NAME}")
 	endif ()
@@ -299,8 +299,8 @@ if (BANANO_GUI)
 
 	add_executable (nano_wallet ${PLATFORM_GUI_TARGET_PROPERTIES}
 		${PLATFORM_WALLET_SOURCE}
-		rai/banano_wallet/entry.cpp
-		rai/banano_wallet/icon.hpp
+		banano/banano_wallet/entry.cpp
+		banano/banano_wallet/icon.hpp
 		${RES})
 
 	target_link_libraries (nano_wallet
@@ -312,7 +312,7 @@ if (BANANO_GUI)
 	endif()
 
 	add_executable (qt_system
-		rai/qt_system/entry.cpp)
+		banano//qt_system/entry.cpp)
 
 	target_link_libraries (qt_system qt node Qt5::Gui Qt5::Widgets)
 
@@ -320,8 +320,8 @@ if (BANANO_GUI)
 
 	if (BANANO_TEST)
 		add_executable (qt_test
-			rai/qt_test/entry.cpp
-			rai/qt_test/qt.cpp)
+			banano//qt_test/entry.cpp
+			banano/qt_test/qt.cpp)
 
 		target_link_libraries(qt_test gtest gtest_main qt Qt5::Test)
 
@@ -365,7 +365,7 @@ if (BANANO_GUI)
 		install (FILES ${Qt5_bin_DIR}/Qt5WinExtras.dll DESTINATION .)
 		install (FILES ${Qt5WindowsPlugin} DESTINATION platforms)
 	else ()
-		install(TARGETS nano_wallet
+		install(TARGETS banano_wallet
 				RUNTIME DESTINATION bin
 				LIBRARY DESTINATION lib
 				ARCHIVE DESTINATION lib
