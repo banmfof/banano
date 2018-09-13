@@ -1,4 +1,5 @@
-#include <banano/lib/numbers.hpp>
+#include <rai/lib/numbers.hpp>
+#include <rai/lib/utility.hpp>
 
 #include <ed25519-donna/ed25519.h>
 
@@ -31,7 +32,11 @@ uint8_t account_decode (char value)
 {
 	assert (value >= '0');
 	assert (value <= '~');
-	auto result (account_reverse[value - 0x30] - 0x30);
+	auto result (account_reverse[value - 0x30]);
+	if (result != '~')
+	{
+		result -= 0x30;
+	}
 	return result;
 }
 }
@@ -70,13 +75,14 @@ bool rai::uint256_union::decode_account (std::string const & source_a)
 	auto error (source_a.size () < 5);
 	if (!error)
 	{
-		auto ban_prefix (source_a[0] == 'b' && source_a[1] == 'a' && source_a[2] == 'n' && (source_a[3] == '_' || source_a[3] == '-'));
-		error = (ban_prefix && source_a.size () != 64);
+		auto xrb_prefix (source_a[0] == 'x' && source_a[1] == 'r' && source_a[2] == 'b' && (source_a[3] == '_' || source_a[3] == '-'));
+		auto nano_prefix (source_a[0] == 'n' && source_a[1] == 'a' && source_a[2] == 'n' && source_a[3] == 'o' && (source_a[4] == '_' || source_a[4] == '-'));
+		error = (xrb_prefix && source_a.size () != 64) || (nano_prefix && source_a.size () != 65);
 		if (!error)
 		{
-			if (ban_prefix)
+			if (xrb_prefix || nano_prefix)
 			{
-				auto i (source_a.begin () + (ban_prefix ? 4 : 5));
+				auto i (source_a.begin () + (xrb_prefix ? 4 : 5));
 				if (*i == '1' || *i == '3')
 				{
 					rai::uint512_t number_l;
@@ -184,7 +190,9 @@ rai::uint256_union rai::uint256_union::operator^ (rai::uint256_union const & oth
 
 rai::uint256_union::uint256_union (std::string const & hex_a)
 {
-	decode_hex (hex_a);
+	auto error (decode_hex (hex_a));
+
+	release_assert (!error);
 }
 
 void rai::uint256_union::clear ()
@@ -428,7 +436,9 @@ bool rai::validate_message (rai::public_key const & public_key, rai::uint256_uni
 
 rai::uint128_union::uint128_union (std::string const & string_a)
 {
-	decode_hex (string_a);
+	auto error (decode_hex (string_a));
+
+	release_assert (!error);
 }
 
 rai::uint128_union::uint128_union (uint64_t value_a)
