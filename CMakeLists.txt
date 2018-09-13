@@ -297,7 +297,7 @@ if (BANANO_GUI)
 
 	qt5_add_resources(RES resources.qrc)
 
-	add_executable (nano_wallet ${PLATFORM_GUI_TARGET_PROPERTIES}
+	add_executable (banano_wallet ${PLATFORM_GUI_TARGET_PROPERTIES}
 		${PLATFORM_WALLET_SOURCE}
 		banano/banano_wallet/entry.cpp
 		banano/banano_wallet/icon.hpp
