@@ -203,12 +203,12 @@ enum class tally_result
 };
 extern rai::keypair const & zero_key;
 extern rai::keypair const & test_genesis_key;
-extern rai::account const & banano/test_account;
-extern rai::account const & banano/beta_account;
-extern rai::account const & banano/live_account;
-extern std::string const & banano/test_genesis;
-extern std::string const & banano/beta_genesis;
-extern std::string const & banano/live_genesis;
+extern rai::account const & banano_test_account;
+extern rai::account const & banano_beta_account;
+extern rai::account const & banano_live_account;
+extern std::string const & banano_test_genesis;
+extern std::string const & banano_beta_genesis;
+extern std::string const & banano_live_genesis;
 extern std::string const & genesis_block;
 extern rai::account const & genesis_account;
 extern rai::account const & burn_account;
