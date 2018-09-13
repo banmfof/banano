@@ -146,7 +146,10 @@ public:
 	void bootstrap ();
 	void bootstrap_any ();
 	void chain (bool = false);
+	void confirmation_active ();
 	void confirmation_history ();
+	void confirmation_info ();
+	void confirmation_quorum ();
 	void delegators ();
 	void delegators_count ();
 	void deterministic_key ();
@@ -156,7 +159,7 @@ public:
 	void key_create ();
 	void key_expand ();
 	void ledger ();
-	void ban_to_raw (rai::uint128_t = rai::BAN_ratio);
+    void ban_to_raw (rai::uint128_t = rai::BAN_ratio);
 	void ban_from_raw (rai::uint128_t = rai::BAN_ratio);
 	void password_change ();
 	void password_enter ();
