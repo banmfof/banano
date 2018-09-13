@@ -316,7 +316,7 @@ if (BANANO_GUI)
 
 	target_link_libraries (qt_system qt node Qt5::Gui Qt5::Widgets)
 
-	set_target_properties (qt nano_wallet qt_system PROPERTIES COMPILE_FLAGS "-DQT_NO_KEYWORDS -DBOOST_ASIO_HAS_STD_ARRAY=1")
+	set_target_properties (qt banano_wallet qt_system PROPERTIES COMPILE_FLAGS "-DQT_NO_KEYWORDS -DBOOST_ASIO_HAS_STD_ARRAY=1")
 
 	if (BANANO_TEST)
 		add_executable (qt_test
