@@ -266,8 +266,8 @@ if (BANANO_GUI)
 	find_package (Qt5 COMPONENTS Core Gui Widgets Test ${PLATFORM_QT_PACKAGES})
 
 	add_library (qt
-		banano//qt/qt.cpp
-		banano//qt/qt.hpp)
+		banano/qt/qt.cpp
+		banano/qt/qt.hpp)
 
 	target_link_libraries(qt
 		secure banano_lib node libminiupnpc-static Qt5::Gui Qt5::Widgets)
@@ -303,16 +303,16 @@ if (BANANO_GUI)
 		banano/banano_wallet/icon.hpp
 		${RES})
 
-	target_link_libraries (nano_wallet
+	target_link_libraries (banano_wallet
 		node
 		qt)
 
 	if (WIN32)
-		target_link_libraries (nano_wallet Qt5::WinExtras)
+		target_link_libraries (banano_wallet Qt5::WinExtras)
 	endif()
 
 	add_executable (qt_system
-		banano//qt_system/entry.cpp)
+		banano/qt_system/entry.cpp)
 
 	target_link_libraries (qt_system qt node Qt5::Gui Qt5::Widgets)
 
@@ -320,7 +320,7 @@ if (BANANO_GUI)
 
 	if (BANANO_TEST)
 		add_executable (qt_test
-			banano//qt_test/entry.cpp
+			banano/qt_test/entry.cpp
 			banano/qt_test/qt.cpp)
 
 		target_link_libraries(qt_test gtest gtest_main qt Qt5::Test)
