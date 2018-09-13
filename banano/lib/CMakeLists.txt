@@ -27,13 +27,13 @@ add_library (banano_lib
 	work.hpp
 	work.cpp)
 
-target_link_libraries (rai_lib
+target_link_libraries (banano_lib
 	xxhash
 	blake2
 	${CRYPTOPP_LIBRARY}
 	Boost::boost)
 
-target_compile_definitions(rai_lib
+target_compile_definitions(banano_lib
 	PUBLIC
 		-DACTIVE_NETWORK=${ACTIVE_NETWORK}
 )
