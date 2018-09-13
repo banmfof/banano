@@ -2,7 +2,7 @@
 #include <banano/node/rpc.hpp>
 #include <banano/node/working.hpp>
 #include <banano/qt/qt.hpp>
-#include <banano/rai_wallet/icon.hpp>
+#include <banano/banano_wallet/icon.hpp>
 
 #include <boost/make_shared.hpp>
 #include <boost/program_options.hpp>
@@ -162,7 +162,7 @@ namespace
 {
 void show_error (std::string const & message_a)
 {
-	QMessageBox message (QMessageBox::Critical, "Error starting Banano", message_a.c_str ());
+	QMessageBox message (QMessageBox::Critical, "Error starting Nano", message_a.c_str ());
 	message.setModal (true);
 	message.show ();
 	message.exec ();
@@ -191,6 +191,7 @@ int run_wallet (QApplication & application, int argc, char * const * argv, boost
 {
 	banano_qt::eventloop_processor processor;
 	boost::filesystem::create_directories (data_path);
+	boost::filesystem::permissions (data_path, boost::filesystem::owner_all);
 	QPixmap pixmap (":/logo.png");
 	QSplashScreen * splash = new QSplashScreen (pixmap);
 	splash->show ();
@@ -236,7 +237,7 @@ int run_wallet (QApplication & application, int argc, char * const * argv, boost
 			}
 			if (config.account.is_zero () || !wallet->exists (config.account))
 			{
-				rai::transaction transaction (wallet->store.environment, nullptr, true);
+				auto transaction (wallet->wallets.tx_begin (true));
 				auto existing (wallet->store.begin (transaction));
 				if (existing != wallet->store.end ())
 				{
@@ -285,6 +286,8 @@ int run_wallet (QApplication & application, int argc, char * const * argv, boost
 
 int main (int argc, char * const * argv)
 {
+	rai::set_umask ();
+
 	try
 	{
 		QApplication application (argc, const_cast<char **> (argv));
