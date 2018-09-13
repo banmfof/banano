@@ -66,9 +66,9 @@ public:
 	QHBoxLayout * scale_layout;
 	QLabel * scale_label;
 	QButtonGroup * ratio_group;
-	QRadioButton * bananobutton;
-	QRadioButton * banoshibutton;
-	QRadioButton * rawbutton;
+	QRadioButton * mrai;
+	QRadioButton * krai;
+	QRadioButton * rai;
 	QPushButton * back;
 
 	QWidget * ledger_window;
@@ -270,19 +270,6 @@ public:
 	QTableView * view;
 	QPushButton * back;
 	banano_qt::wallet & wallet;
-	void refresh_stats ();
-};
-class stats_viewer
-{
-public:
-	stats_viewer (rai_qt::wallet &);
-	QWidget * window;
-	QVBoxLayout * layout;
-	QPushButton * refresh;
-	QStandardItemModel * model;
-	QTableView * view;
-	QPushButton * back;
-	rai_qt::wallet & wallet;
 	void refresh_stats ();
 };
 enum class status_types
