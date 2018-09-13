@@ -96,6 +96,7 @@ bool banano_daemon::daemon_config::upgrade_json (unsigned version_a, boost::prop
 void banano_daemon::daemon::run (boost::filesystem::path const & data_path)
 {
 	boost::filesystem::create_directories (data_path);
+	boost::filesystem::permissions (data_path, boost::filesystem::owner_all);
 	banano_daemon::daemon_config config (data_path);
 	auto config_path ((data_path / "config.json"));
 	std::fstream config_file;
