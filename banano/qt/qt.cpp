@@ -61,7 +61,7 @@ window (new QWidget),
 layout (new QVBoxLayout),
 self_layout (new QHBoxLayout),
 self_window (new QWidget),
-your_account_label (new QLabel ("Your Banano account:")),
+your_account_label (new QLabel ("Your Nano account:")),
 account_window (new QWidget),
 account_layout (new QHBoxLayout),
 account_text (new QLineEdit),
@@ -184,7 +184,7 @@ wallet (wallet_a)
 		this->wallet.pop_main_stack ();
 	});
 	QObject::connect (create_account, &QPushButton::released, [this]() {
-		rai::transaction transaction (this->wallet.wallet_m->store.environment, nullptr, true);
+		auto transaction (this->wallet.wallet_m->wallets.tx_begin_write ());
 		if (this->wallet.wallet_m->store.valid_password (transaction))
 		{
 			this->wallet.wallet_m->deterministic_insert (transaction);
@@ -215,7 +215,7 @@ wallet (wallet_a)
 	});
 	QObject::connect (backup_seed, &QPushButton::released, [this]() {
 		rai::raw_key seed;
-		rai::transaction transaction (this->wallet.wallet_m->store.environment, nullptr, false);
+		auto transaction (this->wallet.wallet_m->wallets.tx_begin_read ());
 		if (this->wallet.wallet_m->store.valid_password (transaction))
 		{
 			this->wallet.wallet_m->store.seed (seed, transaction);
@@ -252,7 +252,7 @@ wallet (wallet_a)
 
 void banano_qt::accounts::refresh_wallet_balance ()
 {
-	rai::transaction transaction (this->wallet.wallet_m->store.environment, nullptr, false);
+	auto transaction (this->wallet.wallet_m->wallets.tx_begin_read ());
 	rai::uint128_t balance (0);
 	rai::uint128_t pending (0);
 	for (auto i (this->wallet.wallet_m->store.begin (transaction)), j (this->wallet.wallet_m->store.end ()); i != j; ++i)
@@ -277,7 +277,7 @@ void banano_qt::accounts::refresh_wallet_balance ()
 void banano_qt::accounts::refresh ()
 {
 	model->removeRows (0, model->rowCount ());
-	rai::transaction transaction (wallet.wallet_m->store.environment, nullptr, false);
+	auto transaction (wallet.wallet_m->wallets.tx_begin_read ());
 	QBrush brush;
 	for (auto i (wallet.wallet_m->store.begin (transaction)), j (wallet.wallet_m->store.end ()); i != j; ++i)
 	{
@@ -380,7 +380,7 @@ wallet (wallet_a)
 			{
 				bool successful (false);
 				{
-					rai::transaction transaction (this->wallet.wallet_m->store.environment, nullptr, true);
+					auto transaction (this->wallet.wallet_m->wallets.tx_begin_write ());
 					if (this->wallet.wallet_m->store.valid_password (transaction))
 					{
 						this->wallet.account = this->wallet.wallet_m->change_seed (transaction, seed_l);
@@ -499,7 +499,7 @@ namespace
 class short_text_visitor : public rai::block_visitor
 {
 public:
-	short_text_visitor (MDB_txn * transaction_a, rai::ledger & ledger_a) :
+	short_text_visitor (rai::transaction const & transaction_a, rai::ledger & ledger_a) :
 	transaction (transaction_a),
 	ledger (ledger_a)
 	{
@@ -566,7 +566,7 @@ public:
 			amount = balance - previous_balance;
 		}
 	}
-	MDB_txn * transaction;
+	rai::transaction const & transaction;
 	rai::ledger & ledger;
 	std::string type;
 	rai::uint128_t amount;
@@ -576,7 +576,7 @@ public:
 
 void banano_qt::history::refresh ()
 {
-	rai::transaction transaction (ledger.store.environment, nullptr, false);
+	auto transaction (ledger.store.tx_begin_read ());
 	model->removeRows (0, model->rowCount ());
 	auto hash (ledger.latest (transaction, account));
 	short_text_visitor visitor (transaction, ledger);
@@ -629,7 +629,7 @@ wallet (wallet_a)
 		rai::block_hash hash_l;
 		if (!hash_l.decode_hex (hash->text ().toStdString ()))
 		{
-			rai::transaction transaction (this->wallet.node.store.environment, nullptr, false);
+			auto transaction (this->wallet.node.store.tx_begin_read ());
 			auto block_l (this->wallet.node.store.block_get (transaction, hash_l));
 			if (block_l != nullptr)
 			{
@@ -654,7 +654,7 @@ wallet (wallet_a)
 		auto error (block.decode_hex (hash->text ().toStdString ()));
 		if (!error)
 		{
-			rai::transaction transaction (this->wallet.node.store.environment, nullptr, false);
+			auto transaction (this->wallet.node.store.tx_begin_read ());
 			if (this->wallet.node.store.block_exists (transaction, block))
 			{
 				rebroadcast->setEnabled (false);
@@ -675,7 +675,7 @@ wallet (wallet_a)
 void banano_qt::block_viewer::rebroadcast_action (rai::uint256_union const & hash_a)
 {
 	auto done (true);
-	rai::transaction transaction (wallet.node.ledger.store.environment, nullptr, false);
+	auto transaction (wallet.node.ledger.store.tx_begin_read ());
 	auto block (wallet.node.store.block_get (transaction, hash_a));
 	if (block != nullptr)
 	{
@@ -706,7 +706,7 @@ refresh (new QPushButton ("Refresh")),
 balance_window (new QWidget),
 balance_layout (new QHBoxLayout),
 balance_label (new QLabel),
-history (wallet_a.wallet_m->node.ledger, account, wallet_a),
+history (wallet_a.node.ledger, account, wallet_a),
 back (new QPushButton ("Back")),
 account (wallet_a.account),
 wallet (wallet_a)
@@ -732,7 +732,7 @@ wallet (wallet_a)
 			show_line_ok (*account_line);
 			this->history.refresh ();
 			auto balance (this->wallet.node.balance_pending (account));
-			auto final_text (std::string ("Balance (BAN): ") + wallet.format_balance (balance.first));
+			auto final_text (std::string ("Balance (XRB): ") + wallet.format_balance (balance.first));
 			if (!balance.second.is_zero ())
 			{
 				final_text += "\nPending: " + wallet.format_balance (balance.second);
@@ -750,88 +750,6 @@ wallet (wallet_a)
 		account_line->setText (value.trimmed ());
 		account_line->setCursorPosition (pos);
 	});
-}
-
-rai_qt::stats_viewer::stats_viewer (rai_qt::wallet & wallet_a) :
-window (new QWidget),
-layout (new QVBoxLayout),
-model (new QStandardItemModel),
-view (new QTableView),
-refresh (new QPushButton ("Refresh")),
-back (new QPushButton ("Back")),
-wallet (wallet_a)
-{
-	model->setHorizontalHeaderItem (0, new QStandardItem ("Last updated"));
-	model->setHorizontalHeaderItem (1, new QStandardItem ("Type"));
-	model->setHorizontalHeaderItem (2, new QStandardItem ("Detail"));
-	model->setHorizontalHeaderItem (3, new QStandardItem ("Direction"));
-	model->setHorizontalHeaderItem (4, new QStandardItem ("Value"));
-	view->setModel (model);
-	view->setEditTriggers (QAbstractItemView::NoEditTriggers);
-	view->verticalHeader ()->hide ();
-	view->horizontalHeader ()->setStretchLastSection (true);
-	layout->setContentsMargins (0, 0, 0, 0);
-	layout->addWidget (view);
-	layout->addWidget (refresh);
-	layout->addWidget (back);
-	window->setLayout (layout);
-
-	QObject::connect (back, &QPushButton::released, [this]() {
-		this->wallet.pop_main_stack ();
-	});
-	QObject::connect (refresh, &QPushButton::released, [this]() {
-		refresh_stats ();
-	});
-
-	refresh_stats ();
-}
-
-void rai_qt::stats_viewer::refresh_stats ()
-{
-	model->removeRows (0, model->rowCount ());
-
-	auto sink = wallet.node.stats.log_sink_json ();
-	wallet.node.stats.log_counters (*sink);
-	auto json = static_cast<boost::property_tree::ptree *> (sink->to_object ());
-	if (json)
-	{
-		// Format the stat data to make totals and values easier to read
-		BOOST_FOREACH (const boost::property_tree::ptree::value_type & child, json->get_child ("entries"))
-		{
-			auto time = child.second.get<std::string> ("time");
-			auto type = child.second.get<std::string> ("type");
-			auto detail = child.second.get<std::string> ("detail");
-			auto dir = child.second.get<std::string> ("dir");
-			auto value = child.second.get<std::string> ("value", "0");
-
-			if (detail == "all")
-			{
-				detail = "total";
-			}
-
-			if (type == "traffic")
-			{
-				const std::vector<std::string> units = { " bytes", " KB", " MB", " GB", " TB", " PB" };
-				double bytes = std::stod (value);
-				auto index = std::min (units.size () - 1, static_cast<size_t> (std::floor (std::log2 (bytes) / 10)));
-				std::string unit = units[index];
-				bytes /= std::pow (1024, index);
-
-				std::stringstream numstream;
-				numstream << std::fixed << std::setprecision (2) << bytes;
-				value = numstream.str () + unit;
-			}
-
-			QList<QStandardItem *> items;
-			items.push_back (new QStandardItem (QString (time.c_str ())));
-			items.push_back (new QStandardItem (QString (type.c_str ())));
-			items.push_back (new QStandardItem (QString (detail.c_str ())));
-			items.push_back (new QStandardItem (QString (dir.c_str ())));
-			items.push_back (new QStandardItem (QString (value.c_str ())));
-
-			model->appendRow (items);
-		}
-	}
 }
 
 banano_qt::stats_viewer::stats_viewer (banano_qt::wallet & wallet_a) :
@@ -952,9 +870,9 @@ std::string banano_qt::status::text ()
 	size_t unchecked (0);
 	std::string count_string;
 	{
-		rai::transaction transaction (wallet.wallet_m->node.store.environment, nullptr, false);
-		auto size (wallet.wallet_m->node.store.block_count (transaction));
-		unchecked = wallet.wallet_m->node.store.unchecked_count (transaction);
+		auto transaction (wallet.wallet_m->wallets.node.store.tx_begin_read ());
+		auto size (wallet.wallet_m->wallets.node.store.block_count (transaction));
+		unchecked = wallet.wallet_m->wallets.node.store.unchecked_count (transaction);
 		count_string = std::to_string (size.sum ());
 	}
 
@@ -987,7 +905,7 @@ std::string banano_qt::status::text ()
 	}
 
 	result += ", Block: ";
-	if (unchecked != 0 && wallet.wallet_m->node.bootstrap_initiator.in_progress ())
+	if (unchecked != 0 && wallet.node.bootstrap_initiator.in_progress ())
 	{
 		count_string += " (" + std::to_string (unchecked) + ")";
 	}
@@ -1166,7 +1084,7 @@ void banano_qt::wallet::start ()
 						auto balance (this_l->node.balance (this_l->account));
 						if (actual <= balance)
 						{
-							rai::transaction transaction (this_l->wallet_m->store.environment, nullptr, false);
+							auto transaction (this_l->wallet_m->wallets.tx_begin_read ());
 							if (this_l->wallet_m->store.valid_password (transaction))
 							{
 								this_l->send_blocks_send->setEnabled (false);
@@ -1434,7 +1352,7 @@ void banano_qt::wallet::start ()
 void banano_qt::wallet::refresh ()
 {
 	{
-		rai::transaction transaction (wallet_m->store.environment, nullptr, false);
+		auto transaction (wallet_m->wallets.tx_begin_read ());
 		assert (wallet_m->store.exists (transaction, account));
 	}
 	self.account_text->setText (QString (account.to_account ().c_str ()));
@@ -1460,7 +1378,8 @@ void banano_qt::wallet::update_connected ()
 void banano_qt::wallet::empty_password ()
 {
 	this->node.alarm.add (std::chrono::steady_clock::now () + std::chrono::seconds (3), [this]() {
-		wallet_m->enter_password (std::string (""));
+		auto transaction (wallet_m->wallets.tx_begin_write ());
+		wallet_m->enter_password (transaction, std::string (""));
 	});
 }
 
@@ -1542,7 +1461,7 @@ wallet (wallet_a)
 	layout->addWidget (back);
 	window->setLayout (layout);
 	QObject::connect (change, &QPushButton::released, [this]() {
-		rai::transaction transaction (this->wallet.wallet_m->store.environment, nullptr, true);
+		auto transaction (this->wallet.wallet_m->wallets.tx_begin_write ());
 		if (this->wallet.wallet_m->store.valid_password (transaction))
 		{
 			if (new_password->text ().isEmpty ())
@@ -1593,12 +1512,12 @@ wallet (wallet_a)
 		rai::account representative_l;
 		if (!representative_l.decode_account (new_representative->text ().toStdString ()))
 		{
-			rai::transaction transaction (this->wallet.wallet_m->store.environment, nullptr, false);
+			auto transaction (this->wallet.wallet_m->wallets.tx_begin_read ());
 			if (this->wallet.wallet_m->store.valid_password (transaction))
 			{
 				change_rep->setEnabled (false);
 				{
-					rai::transaction transaction_l (this->wallet.wallet_m->store.environment, nullptr, true);
+					auto transaction_l (this->wallet.wallet_m->wallets.tx_begin_write ());
 					this->wallet.wallet_m->store.representative_set (transaction_l, representative_l);
 				}
 				auto block (this->wallet.wallet_m->change_sync (this->wallet.account, representative_l));
@@ -1645,7 +1564,7 @@ wallet (wallet_a)
 		this->wallet.pop_main_stack ();
 	});
 	QObject::connect (lock_toggle, &QPushButton::released, [this]() {
-		rai::transaction transaction (this->wallet.wallet_m->store.environment, nullptr, true);
+		auto transaction (this->wallet.wallet_m->wallets.tx_begin_write ());
 		if (this->wallet.wallet_m->store.valid_password (transaction))
 		{
 			// lock wallet
@@ -1676,7 +1595,7 @@ wallet (wallet_a)
 						show_button_ok (*lock_toggle);
 
 						// if wallet is still not unlocked by now, change button text
-						rai::transaction transaction (this->wallet.wallet_m->store.environment, nullptr, true);
+						auto transaction (this->wallet.wallet_m->wallets.tx_begin_write ());
 						if (!this->wallet.wallet_m->store.valid_password (transaction))
 						{
 							lock_toggle->setText ("Unlock");
@@ -1693,7 +1612,7 @@ wallet (wallet_a)
 	});
 
 	// initial state for lock toggle button
-	rai::transaction transaction (this->wallet.wallet_m->store.environment, nullptr, true);
+	auto transaction (this->wallet.wallet_m->wallets.tx_begin_write ());
 	if (this->wallet.wallet_m->store.valid_password (transaction))
 	{
 		lock_toggle->setText ("Lock");
@@ -1706,12 +1625,12 @@ wallet (wallet_a)
 
 void banano_qt::settings::refresh_representative ()
 {
-	rai::transaction transaction (this->wallet.wallet_m->node.store.environment, nullptr, false);
+	auto transaction (this->wallet.wallet_m->wallets.node.store.tx_begin_read ());
 	rai::account_info info;
-	auto error (this->wallet.wallet_m->node.store.account_get (transaction, this->wallet.account, info));
+	auto error (wallet.node.store.account_get (transaction, this->wallet.account, info));
 	if (!error)
 	{
-		auto block (this->wallet.wallet_m->node.store.block_get (transaction, info.rep_block));
+		auto block (wallet.node.store.block_get (transaction, info.rep_block));
 		assert (block != nullptr);
 		current_representative->setText (QString (block->representative ().to_account ().c_str ()));
 	}
@@ -1778,7 +1697,7 @@ peers_layout (new QVBoxLayout),
 peers_model (new QStandardItemModel),
 peers_view (new QTableView),
 peer_summary_layout (new QHBoxLayout),
-bootstrap_label (new QLabel ("IPV6:port \"::ffff:192.168.0.1:7071\"")),
+bootstrap_label (new QLabel ("IPV6:port \"::ffff:192.168.0.1:7075\"")),
 peer_count_label (new QLabel ("")),
 bootstrap_line (new QLineEdit),
 peers_bootstrap (new QPushButton ("Initiate Bootstrap")),
@@ -1958,7 +1877,7 @@ void banano_qt::advanced_actions::refresh_peers ()
 void banano_qt::advanced_actions::refresh_ledger ()
 {
 	ledger_model->removeRows (0, ledger_model->rowCount ());
-	rai::transaction transaction (wallet.node.store.environment, nullptr, false);
+	auto transaction (wallet.node.store.tx_begin_read ());
 	for (auto i (wallet.node.ledger.store.latest_begin (transaction)), j (wallet.node.ledger.store.latest_end ()); i != j; ++i)
 	{
 		QList<QStandardItem *> items;
@@ -2219,7 +2138,7 @@ void banano_qt::block_creation::create_send ()
 			error = destination_l.decode_account (destination->text ().toStdString ());
 			if (!error)
 			{
-				rai::transaction transaction (wallet.node.store.environment, nullptr, false);
+				auto transaction (wallet.node.store.tx_begin_read ());
 				rai::raw_key key;
 				if (!wallet.wallet_m->store.fetch (transaction, account_l, key))
 				{
@@ -2276,7 +2195,7 @@ void banano_qt::block_creation::create_receive ()
 	auto error (source_l.decode_hex (source->text ().toStdString ()));
 	if (!error)
 	{
-		rai::transaction transaction (wallet.node.store.environment, nullptr, false);
+		auto transaction (wallet.node.store.tx_begin_read ());
 		auto block_l (wallet.node.store.block_get (transaction, source_l));
 		if (block_l != nullptr)
 		{
@@ -2352,7 +2271,7 @@ void banano_qt::block_creation::create_change ()
 		error = representative_l.decode_account (representative->text ().toStdString ());
 		if (!error)
 		{
-			rai::transaction transaction (wallet.node.store.environment, nullptr, false);
+			auto transaction (wallet.node.store.tx_begin_read ());
 			rai::account_info info;
 			auto error (wallet.node.store.account_get (transaction, account_l, info));
 			if (!error)
@@ -2404,7 +2323,7 @@ void banano_qt::block_creation::create_open ()
 		error = representative_l.decode_account (representative->text ().toStdString ());
 		if (!error)
 		{
-			rai::transaction transaction (wallet.node.store.environment, nullptr, false);
+			auto transaction (wallet.node.store.tx_begin_read ());
 			auto block_l (wallet.node.store.block_get (transaction, source_l));
 			if (block_l != nullptr)
 			{
